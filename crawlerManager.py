@@ -8,7 +8,7 @@ class CrawlerManager:
         """Přidá crawler do seznamu a spustí ho."""
         crawler = crawler_class(browser, device)
         self.crawlers.append(crawler)
-        crawler.crawl(url)
+        crawler.crawl(url, "", "katy perry roar")
 
     def stop_all(self):
         """Zastaví všechny crawlery."""

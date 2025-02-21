@@ -23,9 +23,7 @@ def start_task():
     device = data.get("device")
     print(url, what_to_crawl, driver, device)
 
-    # args = ["DatoidCrawler", "https://datoid.cz/", "", "chrome", "desktop"] https://datoid.cz/s/katy-perry-roar
-    # args = [url, what_to_crawl, driver, device]
-    args = ["https://datoid.cz/s/katy-perry-roar", "", "chrome", "desktop"]
+    args = ["https://datoid.cz", "katy perry roar", "chrome", "desktop"]
     task = long_running_task.apply_async(args=args)
     active_tasks[task.id] = "PENDING"  # Uložíme do seznamu aktivních úloh
     return jsonify({"task_id": task.id}), 202

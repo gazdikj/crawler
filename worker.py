@@ -19,7 +19,7 @@ def long_running_task(self, url, what_to_crawl, browser, device):
     # Dynamicky najdeme třídu podle jejího názvu
     #crawler_class = globals().get(crawler_class_name)
     
-    crawler_class = get_crawler("https://datoid.cz")
+    crawler_class = get_crawler(url)
 
     if not crawler_class:
         raise ValueError(f"Crawler třída nebyla nalezena.")    
