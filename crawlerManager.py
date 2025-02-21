@@ -1,4 +1,4 @@
-from datoidCrawler import datoidCrawler
+from datoidCrawler import DatoidCrawler
 
 class CrawlerManager:
     def __init__(self):

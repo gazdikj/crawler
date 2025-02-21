@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from celery.result import AsyncResult
 from worker import celery_app, long_running_task
 
+from datoidCrawler import DatoidCrawler
+
 app = Flask(__name__)
 
 # Seznam běžících úloh
@@ -10,7 +12,21 @@ active_tasks = {}
 @app.route("/start-task", methods=["POST"])
 def start_task():
     """Spustí novou úlohu a uloží její ID."""
-    task = long_running_task.apply_async()
+
+    # Ověříme, zda požadavek obsahuje JSON
+    data = request.get_json()
+
+    # Získání parametrů z JSON
+    url = data.get("web")
+    what_to_crawl = data.get("filter")
+    driver = data.get("driver")
+    device = data.get("device")
+    print(url, what_to_crawl, driver, device)
+
+    # args = ["DatoidCrawler", "https://datoid.cz/", "", "chrome", "desktop"] https://datoid.cz/s/katy-perry-roar
+    # args = [url, what_to_crawl, driver, device]
+    args = ["https://datoid.cz/s/katy-perry-roar", "", "chrome", "desktop"]
+    task = long_running_task.apply_async(args=args)
     active_tasks[task.id] = "PENDING"  # Uložíme do seznamu aktivních úloh
     return jsonify({"task_id": task.id}), 202
 

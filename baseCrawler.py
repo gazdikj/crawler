@@ -12,7 +12,7 @@ class BaseCrawler(ABC):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
         options = Options()
 
-        download_folder = "downloads\\" + self.__class__.__name__
+        download_folder = "downloads" #"downloads\\" + self.__class__.__name__
         if not os.path.exists(download_folder):
             os.makedirs(download_folder)
         download_folder = os.path.abspath(download_folder)
@@ -45,10 +45,10 @@ class BaseCrawler(ABC):
         return driver
 
     @abstractmethod
-    def crawl(self, url):
+    def crawl(self, url, task, what_to_crawl=""):
         """Každý crawler musí implementovat vlastní metodu crawl."""
         pass
 
-    def close(self):
+    def close(self, task):
         """Uzavření Selenium driveru."""
         self.driver.quit()

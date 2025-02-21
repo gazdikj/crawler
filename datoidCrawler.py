@@ -6,9 +6,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from baseCrawler import BaseCrawler
 from downloader import Downloader
 
-class datoidCrawler(BaseCrawler):
+class DatoidCrawler(BaseCrawler):
 
-    def crawl(self, url):
+    def get_all_pages_items():
+        pass
+
+    def crawl(self, url, task, what_to_crawl=""):
             """Prochází hlavní stránku, vstupuje do detailu a stahuje soubory."""
             self.driver.get(url)
 
@@ -49,6 +52,11 @@ class datoidCrawler(BaseCrawler):
                         # Po stažení zavřeme detail souboru a vrátíme se zpět
                         self.driver.close()
                         self.driver.switch_to.window(self.driver.window_handles[0])
+
+                        # informace o statu jobu
+                        task.update_state(state="CRAWLING", meta={"current": index + 1, "total": len(items)})
+
+                        break
                                              
                     except Exception as e:
                         print(f"❌ Chyba při zpracování souboru {index + 1}: {e}")

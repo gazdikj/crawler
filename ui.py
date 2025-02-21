@@ -4,17 +4,33 @@ import time
 
 API_URL = "http://localhost:5000"  # Adresa Flask API
 
-st.title("Celery Task Monitor")
+st.title("Crawler Task Monitoring")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    web_url = st.selectbox("Vyberte web pro crawlování:", ["https://datoid.cz", "Možnost 2", "Možnost 3"])
+    driver = st.selectbox("Vyberte prohližeč:", ["chrome", "firefox"])
+
+with col2:
+    what_to_crawl = st.text_input("Co crawlovat:")
+    device = st.selectbox("Vyberte zařízení:", ["desktop", "mobile"])
 
 # Tlačítko pro spuštění nové úlohy
 if st.button("Spustit novou úlohu"):
-    response = requests.post(f"{API_URL}/start-task")
+    data = {
+        "web": web_url,
+        "filter": what_to_crawl,
+        "driver": driver,
+        "device": device
+    }    
+    response = requests.post(f"{API_URL}/start-task", json=data)
     if response.status_code == 202:
         st.success("Úloha byla spuštěna!")
     else:
         st.error("Chyba při spuštění úlohy.")
 
-st.subheader("Seznam běžících úloh")
+st.subheader("Seznam běžících crawlerů")
 
 # Automatická aktualizace seznamu úloh
 placeholder = st.empty()
