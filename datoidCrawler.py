@@ -1,12 +1,15 @@
 import time
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from baseCrawler import BaseCrawler
-from downloader import Downloader
 
 class DatoidCrawler(BaseCrawler):
+
+    def is_download_complete(self, dir):
+        return not any(file.endswith(".crdownload") for file in os.listdir(dir))
 
     def format_url(self, url: str, text: str, index: int) -> str:
         formatted_text = text.replace(" ", "-")  # Nahrazení mezer pomlčkami .rstrip('/')
@@ -28,6 +31,8 @@ class DatoidCrawler(BaseCrawler):
         
 
     def crawl_page(self, task):
+        download_folder = "downloads\\" + self.__class__.__name__
+        print(download_folder)
         # Počkáme, než se načtou všechny položky
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "span.filename"))
@@ -63,12 +68,16 @@ class DatoidCrawler(BaseCrawler):
 
                 # Po stažení zavřeme detail souboru a vrátíme se zpět
                 self.driver.close()
-                self.driver.switch_to.window(self.driver.window_handles[0])
+                self.driver.switch_to.window(self.driver.window_handles[0]) 
+
+                while not self.is_download_complete(download_folder):
+                    print("⏳  Stahování probíhá...")
+                    time.sleep(5)
+
+                print("✅  Stažení souboru dokončeno")
 
                 # informace o statu jobu
                 task.update_state(state="CRAWLING", meta={"current": index + 1, "total": len(items)})
-
-                break
                                         
             except Exception as e:
                 print(f"❌ Chyba při zpracování souboru {index + 1}: {e}")

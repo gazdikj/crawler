@@ -12,7 +12,7 @@ class BaseCrawler(ABC):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
         options = Options()
 
-        download_folder = "downloads" #"downloads\\" + self.__class__.__name__
+        download_folder = "downloads\\" + self.__class__.__name__
         if not os.path.exists(download_folder):
             os.makedirs(download_folder)
         download_folder = os.path.abspath(download_folder)
