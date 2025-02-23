@@ -4,9 +4,12 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import os
 
+from downloader import Downloader
+
 class BaseCrawler(ABC):
     def __init__(self, browser="chrome", device="desktop"):
         self.driver = self.init_browser(browser, device)
+        self.downloader = Downloader()
 
     def init_browser(self, browser, device):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
@@ -19,11 +22,14 @@ class BaseCrawler(ABC):
 
         # Nastavení složky pro stahování specifické pro crawler
         prefs = {
-            "download.default_directory": download_folder,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True
+            "download.default_directory": download_folder,  # Cesta ke složce pro stahování
+            "download.prompt_for_download": False,  # Neptejte se kam uložit
+            "download.directory_upgrade": True,  # Automatická změna složky
+            "safebrowsing.enabled": False,  # Vypne bezpečnostní kontroly (potřebné)
+            "safebrowsing.disable_download_protection": True,  # Povolit nebezpečné soubory
+            "safebrowsing.for_trusted_sources_enabled": False  # Zabrání Chrome ve skenování souborů
         }
+
         options.add_experimental_option("prefs", prefs)            
         
         # Nastavení User-Agent pro různé prohlížeče a zařízení

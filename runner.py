@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from celery.result import AsyncResult
 from worker import celery_app, long_running_task
 
+import json
+
 from datoidCrawler import DatoidCrawler
 
 app = Flask(__name__)
@@ -44,7 +46,7 @@ def get_all_tasks_status():
             "task_id": task_id,
             "status": task_result.status,
             "progress": task_result.info if task_result.info else {}
-        })
+        })          
 
     return jsonify(task_status_list)
 

@@ -10,13 +10,9 @@ WATCHED_FOLDER = "downloads\\datoidCrawler"
 HASH_FILE = "hashes.json"
 
 # Funkce pro výpočet SHA-256 hash
-def calculate_sha256(file_path):
-    time.sleep(1)
+def calculate_sha256(file_path) -> str:
+    #time.sleep(1)
     try:
-        if not os.access(file_path, os.R_OK):  # Zkontroluje, zda je soubor čitelný
-            print(f"⚠️ Nelze číst soubor: {file_path}")
-            return None
-
         sha256_hash = hashlib.sha256()
         with open(file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
@@ -37,9 +33,26 @@ def load_hashes():
     return {}
 
 # Funkce pro uložení hashů
-def save_hashes(hashes):
+def save_hash(hash):
+    with open(HASH_FILE, "a", encoding="utf-8") as f:
+        json.dump(hash, f, indent=4)
+
+def save_hashes(file_name, hash_value): 
+    if os.path.exists(HASH_FILE):
+        with open(HASH_FILE, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = {}
+    else:
+        data = {}
+    
+    # Přidání nového záznamu
+    data[file_name] = hash_value
+    
+    # Uložení aktualizovaných dat
     with open(HASH_FILE, "w", encoding="utf-8") as f:
-        json.dump(hashes, f, indent=4)
+        json.dump(data, f, indent=4, ensure_ascii=False)        
 
 # Event handler pro sledování složky
 class FileHandler(FileSystemEventHandler):
@@ -57,7 +70,7 @@ class FileHandler(FileSystemEventHandler):
                     self.hashes[file_name] = file_hash
                     save_hashes(self.hashes)
                     print(f"Hash vytvořen: {file_name} -> {file_hash}")
-
+"""
 # Načtení existujících hashů
 hashes = load_hashes()
 
@@ -75,3 +88,4 @@ try:
 except KeyboardInterrupt:
     observer.stop()
 observer.join()
+"""

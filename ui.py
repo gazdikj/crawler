@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+import pandas as pd
 
 API_URL = "http://localhost:5000"  # Adresa Flask API
 
@@ -39,6 +40,10 @@ while True:
     response = requests.get(f"{API_URL}/tasks-status")
     if response.status_code == 200:
         tasks = response.json()
+        progress_data = [item["progress"] for item in tasks]
+        df = pd.DataFrame(progress_data)
         with placeholder.container():
-            st.table(tasks)  # Zobrazíme úlohy v tabulce
+            st.dataframe(df, use_container_width=True)
+        #
+        #    st.table(tasks)  # Zobrazíme úlohy v tabulce
     time.sleep(5)  # Aktualizace každých 5 sekund
