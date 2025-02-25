@@ -2,6 +2,7 @@ import os
 import requests
 import random
 import mimetypes
+import zipfile
 
 class Downloader:
     def __init__(self):
@@ -77,8 +78,9 @@ class Downloader:
 
     def get_unique_file_path(self, directory, filename):
         """Zkontroluje, zda soubor existuje, a pokud ano, přidává číslo v závorce před příponu"""
-        base_name, extension = os.path.splitext(filename)
-        unique_filename = filename
+        base_name, _ = os.path.splitext(filename)
+        extension = ".zip"
+        unique_filename = base_name + extension
         counter = 1
 
         while os.path.exists(os.path.join(directory, unique_filename)):
@@ -103,15 +105,22 @@ class Downloader:
             
             try:
                 # Otevřeme soubor pro zápis
+                """
                 with open(file_path, "wb") as file:
                     for chunk in response.iter_content(chunk_size=8192):  # Stahování po blocích
                         if chunk:  # Zajistíme, že chunk není prázdný
                             file.write(chunk)
+                """
+                with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    with zipf.open(file_name, "w") as zip_file:
+                        for chunk in response.iter_content(chunk_size=8192):  # Stahování po blocích
+                            if chunk:
+                                zip_file.write(chunk)                            
 
                 print(f"✅  Soubor byl úspěšně stažen: {file_path}")
                 return "Soubor byl úspěšně stažen", file_path
 
-            except (OSError, IOError) as file_error:
+            except (OSError, IOError, zipfile.BadZipFile) as file_error:
                 # Pokud nastane problém se zápisem, smažeme neúplný soubor
                 print(f"❌ Chyba při zápisu souboru: {file_error}")
                 if os.path.exists(file_path):

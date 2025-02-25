@@ -38,7 +38,7 @@ class DatoidCrawler(BaseCrawler):
     def update_task_state(sefl, task, status, file_name, file_size, current_index, total_index, page) -> None:
         #task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "status": status, "current": current_index, "total": total_index, "page": page})
         count = current_index + 25 * (page - 1)    
-        #task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "current": count, "status": status})
+        task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "current": count, "status": status})
 
 
     def get_parsed_file_info(self, file_info) -> str:
@@ -52,19 +52,21 @@ class DatoidCrawler(BaseCrawler):
 
     def check_size(self, file_size) -> bool:
         if 'GB' in file_size: 
-            print("❌ Velikost souboru je příliš velka a nepodporuje stažení")
+            print(f"❌ Velikost souboru {file_size} je příliš velka a nepodporuje stažení")
+            return False
 
-        if 'MB' in file_size: 
-            print("❌ Velikost souboru je příliš velka a nepodporuje stažení")            
-            size = int("".join(filter(str.isdigit, file_size)))
+        if 'MB' in file_size:           
+            cislo = "".join(c for c in file_size if c.isdigit() or c == ".")
+            size = float(cislo)
 
             if size > 20:
-                print(print("❌ Velikost souboru je příliš velka a nepodporuje stažení"))
+                print(f"❌ Velikost souboru {size} MB je příliš velka a nepodporuje stažení")
                 return False
             else:
-                print(print("✅  Velikost souboru podporuje stažení"))
+                print(f"✅  Velikost souboru {size} MB podporuje stažení")
                 return True
 
+        print(f"✅  Velikost souboru {file_size} MB podporuje stažení")
         return True        
 
 
@@ -88,8 +90,7 @@ class DatoidCrawler(BaseCrawler):
 
                 self.update_task_state(task, "Získávaní informací", file_title, file_size, index + 1, len(items), page)
 
-                if not self.check_size(file_size): 
-                    print("❌ Velikost souboru je příliš velka a nepodporuje stažení") 
+                if not self.check_size(file_size):  
                     self.update_task_state(task, "Velikost souboru nepodporuje stažení", file_title, file_size, index + 1, len(items), page)                    
                     continue
 
@@ -132,7 +133,7 @@ class DatoidCrawler(BaseCrawler):
 
                 print("✅  Stažení souboru dokončeno")
 
-                break
+                
                                         
             except TimeoutException:
                 print(f"❌ Timeout při pokusu o nalezení linku pro stažení souboru: {index + 1}")                 
