@@ -48,6 +48,24 @@ class DatoidCrawler(BaseCrawler):
         title = cleared_data[-1]
         print(f"title: {title}, extension: {extension}, size: {size}")
         return title, extension, size
+    
+
+    def check_size(self, file_size) -> bool:
+        if 'GB' in file_size: 
+            print("❌ Velikost souboru je příliš velka a nepodporuje stažení")
+
+        if 'MB' in file_size: 
+            print("❌ Velikost souboru je příliš velka a nepodporuje stažení")            
+            size = int("".join(filter(str.isdigit, file_size)))
+
+            if size > 20:
+                print(print("❌ Velikost souboru je příliš velka a nepodporuje stažení"))
+                return False
+            else:
+                print(print("✅  Velikost souboru podporuje stažení"))
+                return True
+
+        return True        
 
 
     def crawl_page(self, task, page):
@@ -70,7 +88,7 @@ class DatoidCrawler(BaseCrawler):
 
                 self.update_task_state(task, "Získávaní informací", file_title, file_size, index + 1, len(items), page)
 
-                if 'GB' in file_size: 
+                if not self.check_size(file_size): 
                     print("❌ Velikost souboru je příliš velka a nepodporuje stažení") 
                     self.update_task_state(task, "Velikost souboru nepodporuje stažení", file_title, file_size, index + 1, len(items), page)                    
                     continue
