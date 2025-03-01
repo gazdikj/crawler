@@ -51,4 +51,4 @@ def get_all_tasks_status():
     return jsonify(task_status_list)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

@@ -3,10 +3,16 @@ import requests
 import random
 import mimetypes
 import zipfile
+import time
 
 class Downloader:
     def __init__(self):
-        self.proxies = self.get_proxies()
+        self.proxy = self.get_proxy()
+
+    def get_proxy(self):
+        proxies = self.get_proxies()
+        proxy = self.get_good_random_proxy(proxies)
+        return proxy
 
     def get_proxies(self):
         """Získá seznam veřejných proxy serverů."""
@@ -19,33 +25,21 @@ class Downloader:
             if line.count(".") == 3 and ":" in line:
                 proxies.add(line.strip())
 
-        return list(proxies)   
+        return proxies  
 
-    def get_random_proxy(self):
-        # Náhodné vybrání proxy
-        return random.choice(self.proxies)  
 
-    def download_with_proxy(self, url, save_path="downloads"):
-        """Stáhne soubor přes náhodnou proxy."""
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-
-        filename = os.path.join(save_path, os.path.basename(url))
-
-        proxy = {"http": self.get_random_proxy(), "https": self.get_random_proxy()}
-
-        try:
-            response = requests.get(url, proxies=proxy, timeout=10, stream=True)
-            if response.status_code == 200:
-                with open(filename, "wb") as f:
-                    for chunk in response.iter_content(1024):
-                        f.write(chunk)
-                print(f"✅ Soubor stažen přes proxy {proxy}")
-            else:
-                print(f"❌ Chyba při stahování: {response.status_code}")
-        except Exception as e:
-            print(f"❌ Proxy {proxy} nefunguje: {e}")     
-
+    def get_good_random_proxy(self, proxies):
+        for _ in proxies.copy():
+            proxy = random.choice(list(proxies))
+            try:
+                res = requests.get("http://ipinfo.io/json", proxies={"http": proxy, "https": proxy}, timeout=1)
+            except:
+                proxies.remove(proxy)
+                continue
+            if res.status_code == 200:
+                proxies.remove(proxy)
+                return proxy                       
+  
 
     def get_file_name(self, response, url):
         """Automaticky zjistí název souboru z hlaviček HTTP odpovědi nebo URL"""
@@ -92,9 +86,10 @@ class Downloader:
 
     def download_file(self, url, save_folder):
         """Stáhne soubor z URL a uloží ho do zadané složky s automatickým názvem a ošetřením chyb"""
-        try:          
+        try:        
             # Odeslání GET požadavku
-            response = requests.get(url, stream=True, timeout=15)  # Přidána timeout ochrana
+            #response = requests.get(url, stream=True, proxies={"http": self.proxy, "https": self.proxy}, timeout=15)  # Přidána timeout ochrana
+            response = requests.get(url, stream=True, timeout=15)
             response.raise_for_status()  # Ověříme, zda request byl úspěšný (200 OK)
             
             # Automatické získání názvu souboru
@@ -104,13 +99,6 @@ class Downloader:
             file_path = self.get_unique_file_path(save_folder, file_name)
             
             try:
-                # Otevřeme soubor pro zápis
-                """
-                with open(file_path, "wb") as file:
-                    for chunk in response.iter_content(chunk_size=8192):  # Stahování po blocích
-                        if chunk:  # Zajistíme, že chunk není prázdný
-                            file.write(chunk)
-                """
                 with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                     with zipf.open(file_name, "w") as zip_file:
                         for chunk in response.iter_content(chunk_size=8192):  # Stahování po blocích
@@ -118,7 +106,7 @@ class Downloader:
                                 zip_file.write(chunk)                            
 
                 print(f"✅  Soubor byl úspěšně stažen: {file_path}")
-                return "Soubor byl úspěšně stažen", file_path
+                return "Soubor byl úspěšně stažen", file_path, False
 
             except (OSError, IOError, zipfile.BadZipFile) as file_error:
                 # Pokud nastane problém se zápisem, smažeme neúplný soubor
@@ -126,9 +114,19 @@ class Downloader:
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     print(f"🗑️  Neúplný soubor smazán: {file_path}")
-                return "Chyba při zápisu souboru", file_path
+                return "Chyba při zápisu souboru", file_path, True
 
         except requests.exceptions.RequestException as req_error:
             print(f"❌ Chyba při stahování souboru: {req_error}")
-            return "Chyba při stahování souboru", None
+            return "Chyba při stahování souboru", None, True 
+        
+
+if __name__ == "__main__":
+
+    for _ in range(20):
+        _ = Downloader()
+        print(_.proxy)      
+
+
+
 

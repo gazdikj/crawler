@@ -9,8 +9,16 @@ from selenium.common.exceptions import TimeoutException
 from hashManager import calculate_sha256, save_hashes
 from baseCrawler import BaseCrawler
 
-class DatoidCrawler(BaseCrawler):
 
+class DatoidCrawler(BaseCrawler):        
+    """
+    def db_get_job_id(self, url):
+        device_id = dbOps.insert_device(self.device)
+        webdriver_id = dbOps.insert_webdriver(self.browser)
+        crawler_id = dbOps.insert_crawler(url)
+        job_id = dbOps.insert_crawl_job("test keyword", crawler_id, webdriver_id, device_id)
+        return job_id
+    """
     def format_url(self, url: str, text: str, index: int) -> str:
         formatted_text = text.replace(" ", "-")  # Nahrazení mezer pomlčkami .rstrip('/')
         return f"{url}/s/{formatted_text}/{index}"    
@@ -36,7 +44,6 @@ class DatoidCrawler(BaseCrawler):
 
 
     def update_task_state(sefl, task, status, file_name, file_size, current_index, total_index, page) -> None:
-        #task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "status": status, "current": current_index, "total": total_index, "page": page})
         count = current_index + 25 * (page - 1)    
         task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "current": count, "status": status})
 
@@ -90,7 +97,9 @@ class DatoidCrawler(BaseCrawler):
 
                 self.update_task_state(task, "Získávaní informací", file_title, file_size, index + 1, len(items), page)
 
-                if not self.check_size(file_size):  
+                size_exception = not self.check_size(file_size)
+
+                if size_exception:  
                     self.update_task_state(task, "Velikost souboru nepodporuje stažení", file_title, file_size, index + 1, len(items), page)                    
                     continue
 
@@ -122,26 +131,46 @@ class DatoidCrawler(BaseCrawler):
 
                 self.close_window()
 
-                download_info, download_path = self.downloader.download_file(download_link, download_folder)
+                download_info, download_path, download_exeption = self.downloader.download_file(download_link, download_folder)
 
                 self.update_task_state(task, download_info, file_title, file_size, index + 1, len(items), page)
 
                 if download_path:
                     hash = calculate_sha256(download_path)
-                    save_hashes(download_path, hash)
+                    download_file_title = os.path.basename(download_path)
+                    save_hashes(download_file_title, hash)
                     self.update_task_state(task, "Vytrořen hash pro stažený soubor", file_title, file_size, index + 1, len(items), page)
 
-                print("✅  Stažení souboru dokončeno")
-
-                
+                print("✅  Stažení souboru dokon čeno")
                                         
-            except TimeoutException:
+            except TimeoutException as e:
                 print(f"❌ Timeout při pokusu o nalezení linku pro stažení souboru: {index + 1}")                 
-                traceback.print_exc()  
-                self.close_window()    
+                timeout_exception = "Timeout při pokusu o nalezení linku pro stažení souboru"  
+                self.close_window()   
+
+            finally:
+                t = time.time()
+                if download_path:
+                    db_hash_id = self.db.insert_hash(hash)
+                    db_crack_id = self.db.insert_crack(file_title ,file_size, file_extension, download_file_title, db_hash_id)
+                else:
+                    db_crack_id = self.db.insert_crack(file_title ,file_size, file_extension, None, None)
+                
+                if download_exeption:
+                    self.db.insert_error(download_info, db_crack_id) 
+
+                if timeout_exception:
+                    self.db.insert_error(timeout_exception, db_crack_id)                     
+
+                if size_exception:
+                    self.db.insert_error(f"Velikost souboru {file_title} je příliš velká: {file_size}", db_crack_id)
+                print(f"Čas behu db operací: {time.time() - t}")
 
 
     def crawl(self, url, task, what_to_crawl=""):
+       # self.driver.get("http://ipinfo.io/json")
+        self.db.set_crawler_id(url)
+        self.db.set_job_id(what_to_crawl)
         page = 1
         try:
             while True: 
@@ -156,7 +185,8 @@ class DatoidCrawler(BaseCrawler):
 
                 except Exception as e:
                     print(f"❌ Chyba při načítání hlavní stránky: {e}")
-                    traceback.print_exc()
+                    #traceback.print_exc()
+                    break
 
         finally:
             self.driver.quit()

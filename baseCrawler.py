@@ -5,15 +5,19 @@ from selenium.webdriver.chrome.options import Options
 import os
 
 from downloader import Downloader
+from dbManager import DBManager
 
 class BaseCrawler(ABC):
     def __init__(self, browser="chrome", device="desktop"):
+        self.downloader = Downloader()             
         self.driver = self.init_browser(browser, device)
-        self.downloader = Downloader()
+        self.db = DBManager(browser, device)  
 
     def init_browser(self, browser, device):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
         options = Options()
+
+        #options.add_argument(f"--proxy-server={self.downloader.proxy}")
 
         download_folder = "downloads\\" + self.__class__.__name__
         if not os.path.exists(download_folder):
