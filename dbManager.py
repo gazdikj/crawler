@@ -16,17 +16,12 @@ CONNECTION_STRING = f"""
 """
 
 class DBManager:
-    def __init__(self, driver, device):        
+    def __init__(self, url, keyword, driver, device):        
         self.webdriver_id = self.insert_webdriver(driver)
         self.device_id = self.insert_device(device)
-        self.crawler_id = 0
-        self.job_id = 0
-
-    def set_crawler_id(self, url):
         self.crawler_id = self.insert_crawler(url)
+        self.job_id = self.insert_crawl_job(keyword, self.crawler_id, self.webdriver_id, self.device_id)
 
-    def set_job_id(self, keyword):
-        self.job_id = self.insert_crawl_job(keyword, self.crawler_id, self.webdriver_id, self.device_id) 
 
     # Pomocná funkce pro získání ID existujícího záznamu (nebo vložení nového)
     def get_or_create(self, cursor, table, column, value):

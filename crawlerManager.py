@@ -6,9 +6,9 @@ class CrawlerManager:
 
     def add_crawler(self, crawler_class, url, browser="chrome", device="desktop"):
         """Přidá crawler do seznamu a spustí ho."""
-        crawler = crawler_class(browser, device)
+        crawler = crawler_class(url, "katy perry roar", browser, device)
         self.crawlers.append(crawler)
-        crawler.crawl(url, "", "katy perry roar")
+        crawler.crawl("")
 
     def stop_all(self):
         """Zastaví všechny crawlery."""

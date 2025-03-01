@@ -19,9 +19,9 @@ def long_running_task(self, url, what_to_crawl, browser, device):
         raise ValueError(f"Crawler třída nebyla nalezena.")    
 
     # Vytvoříme instanci crawleru
-    crawler = crawler_class(browser, device)  
+    crawler = crawler_class(url, what_to_crawl, browser, device)  
 
     # Spustíme crawling
-    crawler.crawl(url, self, what_to_crawl)  
+    crawler.crawl(self)  
 
     return f"Crawling of {url} completed"

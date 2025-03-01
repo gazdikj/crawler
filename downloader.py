@@ -6,8 +6,9 @@ import zipfile
 import time
 
 class Downloader:
-    def __init__(self):
+    def __init__(self, folder):
         self.proxy = self.get_proxy()
+        self.download_folder = folder
 
     def get_proxy(self):
         proxies = self.get_proxies()
@@ -70,12 +71,13 @@ class Downloader:
         return ""
     
 
-    def get_unique_file_path(self, directory, filename):
+    def get_unique_file_path(self, filename):
         """Zkontroluje, zda soubor existuje, a pokud ano, přidává číslo v závorce před příponu"""
         base_name, _ = os.path.splitext(filename)
         extension = ".zip"
         unique_filename = base_name + extension
         counter = 1
+        directory = self.download_folder
 
         while os.path.exists(os.path.join(directory, unique_filename)):
             unique_filename = f"{base_name}({counter}){extension}"
@@ -84,7 +86,7 @@ class Downloader:
         return os.path.join(directory, unique_filename)
     
 
-    def download_file(self, url, save_folder):
+    def download_file(self, url):
         """Stáhne soubor z URL a uloží ho do zadané složky s automatickým názvem a ošetřením chyb"""
         try:        
             # Odeslání GET požadavku
@@ -96,7 +98,7 @@ class Downloader:
             file_name = self.get_file_name(response, url)
 
             # Získáme unikátní cestu k souboru
-            file_path = self.get_unique_file_path(save_folder, file_name)
+            file_path = self.get_unique_file_path(file_name)
             
             try:
                 with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:

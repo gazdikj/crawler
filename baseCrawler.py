@@ -8,10 +8,20 @@ from downloader import Downloader
 from dbManager import DBManager
 
 class BaseCrawler(ABC):
-    def __init__(self, browser="chrome", device="desktop"):
-        self.downloader = Downloader()             
+    def __init__(self, url, what_to_crawl="", browser="chrome", device="desktop"):
+        self.url = url
+        self.keyword = what_to_crawl
+        self.download_folder = self.get_download_folder(what_to_crawl)
+        self.downloader = Downloader(self.download_folder)             
         self.driver = self.init_browser(browser, device)
-        self.db = DBManager(browser, device)  
+        self.db = DBManager(url, what_to_crawl, browser, device) 
+
+    def get_download_folder(self, keyword): 
+        download_folder = f"downloads\\{self.__class__.__name__}\\{keyword}"
+        if not os.path.exists(download_folder):
+            os.makedirs(download_folder)
+        return download_folder  
+
 
     def init_browser(self, browser, device):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
@@ -19,14 +29,11 @@ class BaseCrawler(ABC):
 
         #options.add_argument(f"--proxy-server={self.downloader.proxy}")
 
-        download_folder = "downloads\\" + self.__class__.__name__
-        if not os.path.exists(download_folder):
-            os.makedirs(download_folder)
-        download_folder = os.path.abspath(download_folder)
+
 
         # Nastavení složky pro stahování specifické pro crawler
         prefs = {
-            "download.default_directory": download_folder,  # Cesta ke složce pro stahování
+            "download.default_directory": os.path.abspath(self.download_folder),  # Cesta ke složce pro stahování
             "download.prompt_for_download": False,  # Neptejte se kam uložit
             "download.directory_upgrade": True,  # Automatická změna složky
             "safebrowsing.enabled": False,  # Vypne bezpečnostní kontroly (potřebné)
@@ -55,7 +62,7 @@ class BaseCrawler(ABC):
         return driver
 
     @abstractmethod
-    def crawl(self, url, task, what_to_crawl=""):
+    def crawl(self, task):
         """Každý crawler musí implementovat vlastní metodu crawl."""
         pass
 

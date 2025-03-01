@@ -11,14 +11,7 @@ from baseCrawler import BaseCrawler
 
 
 class DatoidCrawler(BaseCrawler):        
-    """
-    def db_get_job_id(self, url):
-        device_id = dbOps.insert_device(self.device)
-        webdriver_id = dbOps.insert_webdriver(self.browser)
-        crawler_id = dbOps.insert_crawler(url)
-        job_id = dbOps.insert_crawl_job("test keyword", crawler_id, webdriver_id, device_id)
-        return job_id
-    """
+
     def format_url(self, url: str, text: str, index: int) -> str:
         formatted_text = text.replace(" ", "-")  # Nahrazení mezer pomlčkami .rstrip('/')
         return f"{url}/s/{formatted_text}/{index}"    
@@ -45,7 +38,7 @@ class DatoidCrawler(BaseCrawler):
 
     def update_task_state(sefl, task, status, file_name, file_size, current_index, total_index, page) -> None:
         count = current_index + 25 * (page - 1)    
-        task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "current": count, "status": status})
+        #task.update_state(state="CRAWLING", meta={"file_name": file_name, "file_size": file_size, "current": count, "status": status})
 
 
     def get_parsed_file_info(self, file_info) -> str:
@@ -78,9 +71,6 @@ class DatoidCrawler(BaseCrawler):
 
 
     def crawl_page(self, task, page):
-        download_folder = "downloads\\" + self.__class__.__name__
-        print(download_folder)
-
         # Počkáme, než se načtou všechny položky
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "span.filename"))
@@ -91,15 +81,15 @@ class DatoidCrawler(BaseCrawler):
         print(f"🔹  Nalezeno {len(items)} souborů ke stažení.")
 
         for index, item in enumerate(items):
+            file_title = file_extension = file_size = download_exeption = file_extension = size_exception = timeout_exception = download_path = None
             try:
                 file_info = item.get_attribute("text")
                 file_title, file_extension, file_size = self.get_parsed_file_info(file_info)
 
-                self.update_task_state(task, "Získávaní informací", file_title, file_size, index + 1, len(items), page)
+                self.update_task_state(task, "Získávaní informací", file_title, file_size, index + 1, len(items), page)               
 
-                size_exception = not self.check_size(file_size)
-
-                if size_exception:  
+                if not self.check_size(file_size): 
+                    size_exception = f"Velikost souboru {file_title} je příliš velká: {file_size}" 
                     self.update_task_state(task, "Velikost souboru nepodporuje stažení", file_title, file_size, index + 1, len(items), page)                    
                     continue
 
@@ -131,7 +121,7 @@ class DatoidCrawler(BaseCrawler):
 
                 self.close_window()
 
-                download_info, download_path, download_exeption = self.downloader.download_file(download_link, download_folder)
+                download_info, download_path, download_exeption = self.downloader.download_file(download_link)
 
                 self.update_task_state(task, download_info, file_title, file_size, index + 1, len(items), page)
 
@@ -141,20 +131,19 @@ class DatoidCrawler(BaseCrawler):
                     save_hashes(download_file_title, hash)
                     self.update_task_state(task, "Vytrořen hash pro stažený soubor", file_title, file_size, index + 1, len(items), page)
 
-                print("✅  Stažení souboru dokon čeno")
+                print("✅  Stažení souboru dokončeno")
                                         
             except TimeoutException as e:
                 print(f"❌ Timeout při pokusu o nalezení linku pro stažení souboru: {index + 1}")                 
-                timeout_exception = "Timeout při pokusu o nalezení linku pro stažení souboru"  
+                timeout_exception = f"Timeout při pokusu o stažení souboru: {file_title}" 
                 self.close_window()   
 
             finally:
-                t = time.time()
                 if download_path:
                     db_hash_id = self.db.insert_hash(hash)
-                    db_crack_id = self.db.insert_crack(file_title ,file_size, file_extension, download_file_title, db_hash_id)
+                    db_crack_id = self.db.insert_crack(file_title, file_size, file_extension, download_file_title, db_hash_id)
                 else:
-                    db_crack_id = self.db.insert_crack(file_title ,file_size, file_extension, None, None)
+                    db_crack_id = self.db.insert_crack(file_title, file_size, file_extension, None, None)
                 
                 if download_exeption:
                     self.db.insert_error(download_info, db_crack_id) 
@@ -163,23 +152,21 @@ class DatoidCrawler(BaseCrawler):
                     self.db.insert_error(timeout_exception, db_crack_id)                     
 
                 if size_exception:
-                    self.db.insert_error(f"Velikost souboru {file_title} je příliš velká: {file_size}", db_crack_id)
-                print(f"Čas behu db operací: {time.time() - t}")
+                    self.db.insert_error(size_exception, db_crack_id)
+                
 
 
-    def crawl(self, url, task, what_to_crawl=""):
+    def crawl(self, task):
        # self.driver.get("http://ipinfo.io/json")
-        self.db.set_crawler_id(url)
-        self.db.set_job_id(what_to_crawl)
-        page = 1
+        page = 0
         try:
             while True: 
-                formatted_url = self.format_url(url, what_to_crawl, page) 
+                page = page + 1
+                formatted_url = self.format_url(self.url, self.keyword, page) 
                 print(formatted_url)
                 self.driver.get(formatted_url)
                 try:
                     self.crawl_page(task=task, page=page)          
-                    page = page + 1
                     if not self.find_next_button():
                         break
 
