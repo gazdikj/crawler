@@ -1,12 +1,12 @@
 import pyodbc
 import time
 
-from config import SERVER_NAME
+from config import SERVER_NAME, DB_USER, DB_PASSWORD
 
 # Nastavení připojení k databázi
 DB_DRIVER = "SQL Server"
 DB_SERVER = SERVER_NAME
-DB_DATABASE = "CrawlerDB"
+DB_DATABASE = "test"
 
 CONNECTION_STRING = f"""
     DRIVER={{{DB_DRIVER}}};
@@ -122,7 +122,7 @@ class DBManager:
 
 # Testovací volání funkcí
 if __name__ == "__main__":
-    db = DBManager("ChromeDriver", "Windows 10")
+    db = DBManager("", "","ChromeDriver", "Windows 10")
 
     t = time.time()
     #db.set_crawler_id("url.com")

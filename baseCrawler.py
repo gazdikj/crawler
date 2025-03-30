@@ -27,9 +27,7 @@ class BaseCrawler(ABC):
         """Inicializace Selenium WebDriveru s emulací zařízení."""
         options = Options()
 
-        #options.add_argument(f"--proxy-server={self.downloader.proxy}")
-
-
+        options.add_argument(f"--proxy-server={self.downloader.proxy}")
 
         # Nastavení složky pro stahování specifické pro crawler
         prefs = {
@@ -59,6 +57,7 @@ class BaseCrawler(ABC):
 
         service = Service("drivers\\chromedriver-win64\\chromedriver.exe")
         driver = webdriver.Chrome(service=service, options=options)
+
         return driver
 
     @abstractmethod

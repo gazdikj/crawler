@@ -93,11 +93,18 @@ class DatoidCrawler(BaseCrawler):
                     self.update_task_state(task, "Velikost souboru nepodporuje stažení", file_title, file_size, index + 1, len(items), page)                    
                     continue
 
+                file_onclick = item.get_attribute("onclick")
+                file_onclick
+                item_link = file_onclick.split('window.open("')[-1].split('");')[0]
+                self.driver.execute_script("window.open(arguments[0]);", item_link) # Otevření nového okna pro detail souboru
+                self.driver.switch_to.window(self.driver.window_handles[1])  # Přepnout na nové okno
+                """
                 file_link = item.get_attribute("href")
                 print(f"➡️   Otevírám detail souboru: {file_link}")
 
                 self.driver.execute_script("window.open(arguments[0]);", file_link) # Otevření nového okna pro detail souboru
                 self.driver.switch_to.window(self.driver.window_handles[1])  # Přepnout na nové okno
+                """
 
                 print("➡️   Klikám na tlačítko 'Stáhnout'")
                 WebDriverWait(self.driver, 5).until(
@@ -118,12 +125,12 @@ class DatoidCrawler(BaseCrawler):
                 download_link = download_link_element.get_attribute("href")
 
                 print(f"✅  Link pro stažení souboru: {download_link}")
-
+                self.driver.get(download_link)
+                #download_info, download_path, download_exeption = self.downloader.download_file(download_link)
+                
                 self.close_window()
 
-                download_info, download_path, download_exeption = self.downloader.download_file(download_link)
-
-                self.update_task_state(task, download_info, file_title, file_size, index + 1, len(items), page)
+                #self.update_task_state(task, download_info, file_title, file_size, index + 1, len(items), page)
 
                 if download_path:
                     hash = calculate_sha256(download_path)
@@ -157,7 +164,7 @@ class DatoidCrawler(BaseCrawler):
 
 
     def crawl(self, task):
-       # self.driver.get("http://ipinfo.io/json")
+        self.driver.get("http://whatismyipaddress.com")
         page = 0
         try:
             while True: 
