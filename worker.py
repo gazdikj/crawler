@@ -1,6 +1,8 @@
 from celery import Celery
+from time import sleep
 
 from crawlerType import get_crawler
+from testFile import testFile, analyseFile
 
 # Inicializace Celery s Redis brokerem
 celery_app = Celery(
@@ -25,3 +27,15 @@ def long_running_task(self, url, what_to_crawl, browser, device):
     crawler.crawl(self)  
 
     return f"Crawling of {url} completed"
+
+@celery_app.task(bind=True)
+def analyse_sample(self, file_name, byte_data): 
+    self.update_state(state="File uploaded for testing")  
+    test_id = testFile(file_name, byte_data)
+
+    self.update_state(state="Analysing file") 
+    while not analyseFile(test_id):
+        print('Waiting 60 seconds\n')        
+        sleep(60)        
+
+    return f"Analysis completed"

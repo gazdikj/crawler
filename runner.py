@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request
 from celery.result import AsyncResult
-from worker import celery_app, long_running_task
+from worker import celery_app, long_running_task, analyse_sample
 
+import base64
 import json
 
 from datoidCrawler import DatoidCrawler
@@ -10,6 +11,24 @@ app = Flask(__name__)
 
 # Seznam běžících úloh
 active_tasks = {}
+
+@app.route("/start-analysis", methods=["POST"])
+def start_analysis():
+    data = request.get_json()
+
+    file_name = data.get("file_name")
+    encoded_data = data.get("byte_data")
+    try:
+        byte_data = base64.b64decode(encoded_data)
+        print(f"Přijal jsem soubor: {file_name}, velikost: {len(byte_data)} bajtů")
+        
+        args = [file_name, byte_data]
+        task = analyse_sample.apply_async(args=args)
+        active_tasks[task.id] = "PENDING"  # Uložíme do seznamu aktivních úloh
+        return jsonify({"task_id": task.id}), 202
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @app.route("/start-task", methods=["POST"])
 def start_task():
