@@ -71,11 +71,11 @@ def analyseFile(test_id):
         # nastavení atributu analysed = TRUE značí, že crack byl otestován
         db.update_sample(test_id, analysis_id)
 
-        return True
+        return data
         
     else:
         print('The analysis is not yet complete.\n')
-        return False
+        return None
 
 
 if __name__ == "__main__":

@@ -33,9 +33,14 @@ def analyse_sample(self, file_name, byte_data):
     self.update_state(state="File uploaded for testing")  
     test_id = testFile(file_name, byte_data)
 
-    self.update_state(state="Analysing file") 
-    while not analyseFile(test_id):
-        print('Waiting 60 seconds\n')        
-        sleep(60)        
+    self.update_state(state="Analysing file")
+    data = None  
+    while not data:
+        data = analyseFile(test_id)
+        print('Waiting 10 seconds\n')        
+        sleep(10)        
 
-    return f"Analysis completed"
+    return {
+        "status": "Analysis completed",
+        "data": data
+    }

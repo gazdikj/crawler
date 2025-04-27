@@ -3,9 +3,6 @@ from celery.result import AsyncResult
 from worker import celery_app, long_running_task, analyse_sample
 
 import base64
-import json
-
-from datoidCrawler import DatoidCrawler
 
 app = Flask(__name__)
 
@@ -69,6 +66,28 @@ def get_all_tasks_status():
         })          
 
     return jsonify(task_status_list)
+
+@app.route("/get-analysis", methods=["GET"])
+def get_latest_analysis():
+    for task_id in list(active_tasks.keys()): 
+        task_result = AsyncResult(task_id, app=celery_app)
+
+        if task_result.state == "SUCCESS":
+            active_tasks.pop(task_id, None)
+            result_data = task_result.result  
+
+            if isinstance(result_data, dict) and result_data.get("status") == "Analysis completed":                
+                return jsonify({
+                    "message": "Analysis completed",
+                    "data": result_data.get("data")
+                }), 200
+
+    # Pokud žádný task není hotový
+    return jsonify({
+        "message": "No completed analysis yet",
+    }), 202
+
+
 
 if __name__ == "__main__":
     app.run(debug=False)
